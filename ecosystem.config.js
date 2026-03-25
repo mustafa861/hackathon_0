@@ -53,6 +53,18 @@ module.exports = {
       error_file: 'vault/Logs/whatsapp-watcher-error.log',
       out_file: 'vault/Logs/whatsapp-watcher-out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
+    },
+    {
+      name: 'process-monitor',
+      script: 'python',
+      args: 'src/process_monitor.py vault/',
+      interpreter: 'none',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '200M',
+      error_file: 'vault/Logs/process-monitor-error.log',
+      out_file: 'vault/Logs/process-monitor-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
     }
   ]
 };
