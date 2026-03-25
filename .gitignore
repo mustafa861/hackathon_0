@@ -1,0 +1,103 @@
+# .gitignore for Personal AI Employee
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Credentials
+credentials.json
+token.pickle
+.gmail_token.pickle
+
+# WhatsApp session
+.whatsapp_session/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# Logs
+*.log
+vault/Logs/*.log
+vault/Logs/*.json
+
+# PM2
+.pm2/
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Obsidian
+.obsidian/
+.trash/
+
+# Vault sensitive data (keep structure, ignore content)
+vault/Needs_Action/*.md
+vault/Pending_Approval/*.md
+vault/Approved/*.md
+vault/Rejected/*.md
+vault/Done/*.md
+vault/Plans/*.md
+vault/Briefings/*.md
+vault/Accounting/*
+vault/Drop/*
+vault/Projects/*
+vault/Contacts/*
+
+# Keep README files
+!vault/**/README.md
+!vault/**/.gitkeep
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# OS files
+Thumbs.db
+Desktop.ini
+
+# Test files
+test_*.py
+*_test.py
+tests/__pycache__/
+
+# Temporary files
+tmp/
+temp/
+*.tmp
