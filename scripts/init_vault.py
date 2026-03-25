@@ -33,7 +33,7 @@ def create_vault_structure(vault_path: str):
     for folder in folders:
         folder_path = vault / folder
         folder_path.mkdir(parents=True, exist_ok=True)
-        print(f"✓ Created: {folder}/")
+        print(f"[OK] Created: {folder}/")
 
         # Create .gitkeep to preserve empty folders
         gitkeep = folder_path / '.gitkeep'
@@ -42,7 +42,7 @@ def create_vault_structure(vault_path: str):
     # Create README files for key folders
     create_folder_readmes(vault)
 
-    print("\n✓ Vault structure created successfully!")
+    print("\n[OK] Vault structure created successfully!")
     print(f"\nVault location: {vault.absolute()}")
     print("\nNext steps:")
     print("1. Review and customize vault/Business_Goals.md")
@@ -155,7 +155,7 @@ for any new files.
     for folder, content in readmes.items():
         readme_path = vault / folder / 'README.md'
         readme_path.write_text(content.strip(), encoding='utf-8')
-        print(f"  ✓ Created README in {folder}/")
+        print(f"  [OK] Created README in {folder}/")
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
