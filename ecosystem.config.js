@@ -79,6 +79,18 @@ module.exports = {
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
     },
     {
+      name: 'twitter-watcher',
+      script: 'python',
+      args: 'src/watchers/twitter_watcher.py vault/ .twitter_session/',
+      interpreter: 'none',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '400M',
+      error_file: 'vault/Logs/twitter-watcher-error.log',
+      out_file: 'vault/Logs/twitter-watcher-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
+    },
+    {
       name: 'process-monitor',
       script: 'python',
       args: 'src/process_monitor.py vault/',
