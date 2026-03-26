@@ -12,7 +12,7 @@ import json
 
 class FacebookWatcher(BaseWatcher):
     def __init__(self, vault_path: str, session_path: str):
-        super().__init__(vault_path, check_interval=300)  # Check every 5 minutes
+        super().__init__(vault_path, check_interval=30)  # Check every 30 seconds
         self.session_path = Path(session_path)
         self.keywords = ['order', 'inquiry', 'interested', 'price', 'buy', 'purchase', 'question']
         self.processed_items = set()
@@ -28,31 +28,31 @@ class FacebookWatcher(BaseWatcher):
 
                 browser = p.chromium.launch_persistent_context(
                     str(self.session_path),
-                    headless=False,  # Show browser for easier debugging
+                    headless=session_exists,  # Show browser only for first login
                     args=['--no-sandbox', '--disable-blink-features=AutomationControlled']
                 )
 
                 page = browser.pages[0] if browser.pages else browser.new_page()
 
                 self.logger.info('Opening Facebook...')
-                page.goto('https://www.facebook.com/messages', timeout=120000)
+                page.goto('https://www.facebook.com/messages', timeout=180000)
 
                 # Wait for Facebook to load
                 try:
                     # Wait for either messages or login page
-                    page.wait_for_selector('[role="navigation"], #email', timeout=60000)
+                    page.wait_for_selector('[role="navigation"], #email', timeout=120000)
 
                     # Check if we need to login
                     if page.query_selector('#email'):
                         self.logger.info('LOGIN REQUIRED - Please login to Facebook!')
-                        self.logger.info('Waiting up to 3 minutes for you to login...')
-                        page.wait_for_selector('[role="navigation"]', timeout=180000)
+                        self.logger.info('Waiting up to 5 minutes for you to login...')
+                        page.wait_for_selector('[role="navigation"]', timeout=300000)
                         self.logger.info('Login successful! Checking messages...')
                     else:
                         self.logger.info('Already logged in! Checking messages...')
 
                     # Check for unread messages
-                    page.wait_for_timeout(3000)  # Wait for messages to load
+                    page.wait_for_timeout(5000)  # Wait for messages to load
 
                     # Look for unread message indicators
                     unread_indicators = page.query_selector_all('[aria-label*="unread"], [aria-label*="Unread"]')

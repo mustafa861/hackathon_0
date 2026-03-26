@@ -12,7 +12,7 @@ import json
 
 class TwitterWatcher(BaseWatcher):
     def __init__(self, vault_path: str, session_path: str):
-        super().__init__(vault_path, check_interval=300)  # Check every 5 minutes
+        super().__init__(vault_path, check_interval=30)  # Check every 30 seconds
         self.session_path = Path(session_path)
         self.keywords = ['question', 'help', 'inquiry', 'interested', 'collaboration', 'opportunity']
         self.processed_items = set()
@@ -28,7 +28,7 @@ class TwitterWatcher(BaseWatcher):
 
                 browser = p.chromium.launch_persistent_context(
                     str(self.session_path),
-                    headless=False,  # Show browser for easier debugging
+                    headless=session_exists,  # Show browser only for first login
                     args=['--no-sandbox', '--disable-blink-features=AutomationControlled']
                 )
 
