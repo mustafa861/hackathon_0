@@ -16,85 +16,93 @@ class WhatsAppWatcher(BaseWatcher):
         self.session_path = Path(session_path)
         self.keywords = ['urgent', 'asap', 'invoice', 'payment', 'help', 'emergency']
         self.processed_messages = set()
+        self.playwright = None
+        self.browser = None
+
+    def _init_browser(self):
+        """Initialize browser if not already initialized"""
+        if self.playwright is None:
+            self.playwright = sync_playwright().start()
+            session_exists = self.session_path.exists() and any(self.session_path.iterdir())
+            self.browser = self.playwright.chromium.launch_persistent_context(
+                str(self.session_path),
+                headless=False,  # Always show browser
+                args=['--no-sandbox', '--disable-blink-features=AutomationControlled']
+            )
+            self.logger.info('Browser initialized - will stay open')
 
     def check_for_updates(self) -> list:
         """Check WhatsApp Web for unread messages with keywords"""
         messages = []
 
         try:
-            with sync_playwright() as p:
-                # Check if session exists - if not, show browser for login
-                session_exists = self.session_path.exists() and any(self.session_path.iterdir())
+            # Initialize browser if needed
+            self._init_browser()
 
-                browser = p.chromium.launch_persistent_context(
-                    str(self.session_path),
-                    headless=False,  # Always show browser for easier debugging
-                    args=['--no-sandbox', '--disable-blink-features=AutomationControlled']
-                )
+            page = self.browser.pages[0] if self.browser.pages else self.browser.new_page()
 
-                page = browser.pages[0] if browser.pages else browser.new_page()
+            self.logger.info('Opening WhatsApp Web...')
+            page.goto('https://web.whatsapp.com', timeout=120000)
 
-                self.logger.info('Opening WhatsApp Web...')
-                page.goto('https://web.whatsapp.com', timeout=120000)
+            # Wait for WhatsApp to load (or QR code)
+            self.logger.info('Waiting for WhatsApp to load (QR code or chat list)...')
 
-                # Wait for WhatsApp to load (or QR code)
-                self.logger.info('Waiting for WhatsApp to load (QR code or chat list)...')
+            try:
+                # Wait for either chat list (logged in) or QR code (need to scan)
+                page.wait_for_selector('[data-testid="chat-list"], canvas[aria-label="Scan me!"]', timeout=120000)
 
+                # Check if we need to scan QR
+                qr_code = page.query_selector('canvas[aria-label="Scan me!"]')
+                if qr_code:
+                    self.logger.info('QR CODE VISIBLE - Please scan with your phone!')
+                    self.logger.info('Waiting up to 3 minutes for you to scan...')
+                    page.wait_for_selector('[data-testid="chat-list"]', timeout=180000)
+                    self.logger.info('Login successful! Starting to monitor messages...')
+                else:
+                    self.logger.info('Already logged in! Monitoring messages...')
+
+            except Exception as e:
+                self.logger.error(f'Timeout waiting for WhatsApp: {e}')
+                self.logger.info('Browser will stay open - please login manually if needed')
+                import time
+                time.sleep(10)
+                return []
+
+            # Find unread chats
+            unread_chats = page.query_selector_all('[aria-label*="unread"]')
+
+            for chat in unread_chats[:5]:  # Limit to 5 most recent
                 try:
-                    # Wait for either chat list (logged in) or QR code (need to scan)
-                    page.wait_for_selector('[data-testid="chat-list"], canvas[aria-label="Scan me!"]', timeout=120000)
+                    text = chat.inner_text().lower()
 
-                    # Check if we need to scan QR
-                    qr_code = page.query_selector('canvas[aria-label="Scan me!"]')
-                    if qr_code:
-                        self.logger.info('QR CODE VISIBLE - Please scan with your phone!')
-                        self.logger.info('Waiting up to 3 minutes for you to scan...')
-                        page.wait_for_selector('[data-testid="chat-list"]', timeout=180000)
-                        self.logger.info('Login successful! Starting to monitor messages...')
-                    else:
-                        self.logger.info('Already logged in! Monitoring messages...')
+                    # Check for keywords
+                    if any(kw in text for kw in self.keywords):
+                        # Extract chat name
+                        chat_name = chat.query_selector('[dir="auto"]')
+                        name = chat_name.inner_text() if chat_name else 'Unknown'
 
+                        # Create unique ID
+                        msg_id = f"{name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+
+                        if msg_id not in self.processed_messages:
+                            messages.append({
+                                'id': msg_id,
+                                'name': name,
+                                'text': text[:200],
+                                'timestamp': datetime.now().isoformat()
+                            })
+                            self.processed_messages.add(msg_id)
                 except Exception as e:
-                    self.logger.error(f'Timeout waiting for WhatsApp: {e}')
-                    self.logger.info('Browser will stay open - please login manually if needed')
-                    import time
-                    time.sleep(10)  # Keep browser open for 10 seconds
-                    browser.close()
-                    return []
+                    self.logger.error(f'Error processing chat: {e}')
+                    continue
 
-                # Find unread chats
-                unread_chats = page.query_selector_all('[aria-label*="unread"]')
+            # Don't close browser - let it stay open for continuous monitoring
+            self.logger.info('Check complete - browser staying open for next check')
+            return messages
 
-                for chat in unread_chats[:5]:  # Limit to 5 most recent
-                    try:
-                        text = chat.inner_text().lower()
-
-                        # Check for keywords
-                        if any(kw in text for kw in self.keywords):
-                            # Extract chat name
-                            chat_name = chat.query_selector('[dir="auto"]')
-                            name = chat_name.inner_text() if chat_name else 'Unknown'
-
-                            # Create unique ID
-                            msg_id = f"{name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-
-                            if msg_id not in self.processed_messages:
-                                messages.append({
-                                    'id': msg_id,
-                                    'name': name,
-                                    'text': text[:200],
-                                    'timestamp': datetime.now().isoformat()
-                                })
-                                self.processed_messages.add(msg_id)
-                    except Exception as e:
-                        self.logger.error(f'Error processing chat: {e}')
-                        continue
-
-                browser.close()
         except Exception as e:
             self.logger.error(f'WhatsApp check failed: {e}')
-
-        return messages
+            return []
 
     def create_action_file(self, message) -> Path:
         """Create action file for WhatsApp message"""

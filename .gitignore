@@ -13,6 +13,12 @@ token.pickle
 # WhatsApp session
 .whatsapp_session/
 
+# Social media sessions (browser data - too large for git)
+.facebook_session/
+.instagram_session/
+.linkedin_session/
+.twitter_session/
+
 # Python
 __pycache__/
 *.py[cod]
