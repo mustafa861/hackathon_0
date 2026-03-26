@@ -55,6 +55,18 @@ module.exports = {
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
     },
     {
+      name: 'linkedin-watcher',
+      script: 'python',
+      args: 'src/watchers/linkedin_watcher.py vault/ .linkedin_session/',
+      interpreter: 'none',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '400M',
+      error_file: 'vault/Logs/linkedin-watcher-error.log',
+      out_file: 'vault/Logs/linkedin-watcher-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
+    },
+    {
       name: 'process-monitor',
       script: 'python',
       args: 'src/process_monitor.py vault/',

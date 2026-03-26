@@ -23,20 +23,42 @@ class WhatsAppWatcher(BaseWatcher):
 
         try:
             with sync_playwright() as p:
+                # Check if session exists - if not, show browser for login
+                session_exists = self.session_path.exists() and any(self.session_path.iterdir())
+
                 browser = p.chromium.launch_persistent_context(
                     str(self.session_path),
-                    headless=True,
-                    args=['--no-sandbox']
+                    headless=False,  # Always show browser for easier debugging
+                    args=['--no-sandbox', '--disable-blink-features=AutomationControlled']
                 )
 
                 page = browser.pages[0] if browser.pages else browser.new_page()
-                page.goto('https://web.whatsapp.com', timeout=60000)
 
-                # Wait for WhatsApp to load
+                self.logger.info('Opening WhatsApp Web...')
+                page.goto('https://web.whatsapp.com', timeout=120000)
+
+                # Wait for WhatsApp to load (or QR code)
+                self.logger.info('Waiting for WhatsApp to load (QR code or chat list)...')
+
                 try:
-                    page.wait_for_selector('[data-testid="chat-list"]', timeout=30000)
-                except:
-                    self.logger.warning('WhatsApp not loaded, may need manual login')
+                    # Wait for either chat list (logged in) or QR code (need to scan)
+                    page.wait_for_selector('[data-testid="chat-list"], canvas[aria-label="Scan me!"]', timeout=120000)
+
+                    # Check if we need to scan QR
+                    qr_code = page.query_selector('canvas[aria-label="Scan me!"]')
+                    if qr_code:
+                        self.logger.info('QR CODE VISIBLE - Please scan with your phone!')
+                        self.logger.info('Waiting up to 3 minutes for you to scan...')
+                        page.wait_for_selector('[data-testid="chat-list"]', timeout=180000)
+                        self.logger.info('Login successful! Starting to monitor messages...')
+                    else:
+                        self.logger.info('Already logged in! Monitoring messages...')
+
+                except Exception as e:
+                    self.logger.error(f'Timeout waiting for WhatsApp: {e}')
+                    self.logger.info('Browser will stay open - please login manually if needed')
+                    import time
+                    time.sleep(10)  # Keep browser open for 10 seconds
                     browser.close()
                     return []
 
