@@ -113,6 +113,18 @@ module.exports = {
       error_file: 'vault/Logs/process-monitor-error.log',
       out_file: 'vault/Logs/process-monitor-out.log',
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
+    },
+    {
+      name: 'linkedin-poster',
+      script: 'python',
+      args: 'src/linkedin_poster.py vault/ .linkedin_session/',
+      interpreter: 'none',
+      autorestart: false,
+      cron_restart: '0 9 * * *',
+      watch: false,
+      error_file: 'vault/Logs/linkedin-poster-error.log',
+      out_file: 'vault/Logs/linkedin-poster-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
     }
   ]
 };
