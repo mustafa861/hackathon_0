@@ -67,6 +67,18 @@ module.exports = {
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
     },
     {
+      name: 'facebook-watcher',
+      script: 'python',
+      args: 'src/watchers/facebook_watcher.py vault/ .facebook_session/',
+      interpreter: 'none',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '400M',
+      error_file: 'vault/Logs/facebook-watcher-error.log',
+      out_file: 'vault/Logs/facebook-watcher-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
+    },
+    {
       name: 'process-monitor',
       script: 'python',
       args: 'src/process_monitor.py vault/',
