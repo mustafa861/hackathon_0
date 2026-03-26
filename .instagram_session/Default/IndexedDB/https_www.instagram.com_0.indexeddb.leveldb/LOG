@@ -1,2 +1,3 @@
-2026/03/26-19:25:11.352 5b4 Creating DB C:\Users\computer lab\Documents\GitHub\hackathon_0\.instagram_session\Default\IndexedDB\https_www.instagram.com_0.indexeddb.leveldb since it was missing.
-2026/03/26-19:25:11.794 5b4 Reusing MANIFEST C:\Users\computer lab\Documents\GitHub\hackathon_0\.instagram_session\Default\IndexedDB\https_www.instagram.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/03/26-19:30:27.617 15a0 Reusing MANIFEST C:\Users\computer lab\Documents\GitHub\hackathon_0\.instagram_session\Default\IndexedDB\https_www.instagram.com_0.indexeddb.leveldb/MANIFEST-000001
+2026/03/26-19:30:27.618 15a0 Recovering log #3
+2026/03/26-19:30:27.620 15a0 Reusing old log C:\Users\computer lab\Documents\GitHub\hackathon_0\.instagram_session\Default\IndexedDB\https_www.instagram.com_0.indexeddb.leveldb/000003.log 
