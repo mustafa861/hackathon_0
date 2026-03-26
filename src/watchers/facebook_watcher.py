@@ -1,8 +1,7 @@
 """
-Facebook & Instagram Watcher
-Monitors Facebook and Instagram for messages, comments, and post opportunities.
+Facebook Watcher
+Monitors Facebook for messages, comments, and post opportunities.
 Uses Playwright for browser automation.
-Note: Facebook and Instagram use same Meta session.
 """
 
 from playwright.sync_api import sync_playwright
@@ -94,49 +93,6 @@ class FacebookWatcher(BaseWatcher):
                             self.logger.error(f'Error processing message: {e}')
                             continue
 
-                    # Check Instagram messages (if logged in to Meta)
-                    try:
-                        self.logger.info('Checking Instagram messages...')
-                        page.goto('https://www.instagram.com/direct/inbox/', timeout=60000)
-                        page.wait_for_timeout(3000)
-
-                        # Look for unread Instagram messages
-                        unread_ig = page.query_selector_all('[aria-label*="unread"]')
-
-                        for msg in unread_ig[:3]:  # Limit to 3
-                            try:
-                                msg.click()
-                                page.wait_for_timeout(2000)
-
-                                # Get sender
-                                sender_elem = page.query_selector('header a')
-                                sender = sender_elem.inner_text() if sender_elem else 'Unknown'
-
-                                # Get message text
-                                msg_text_elem = page.query_selector('[dir="auto"]')
-                                text = msg_text_elem.inner_text().lower() if msg_text_elem else ''
-
-                                if len(text) > 10:
-                                    msg_id = f"instagram_{sender}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-
-                                    if msg_id not in self.processed_items:
-                                        items.append({
-                                            'id': msg_id,
-                                            'type': 'instagram_message',
-                                            'sender': sender,
-                                            'text': text[:300],
-                                            'timestamp': datetime.now().isoformat()
-                                        })
-                                        self.processed_items.add(msg_id)
-                                        self.logger.info(f'Found Instagram message from {sender}')
-
-                            except Exception as e:
-                                self.logger.error(f'Error processing Instagram message: {e}')
-                                continue
-
-                    except Exception as e:
-                        self.logger.error(f'Error checking Instagram: {e}')
-
                 except Exception as e:
                     self.logger.error(f'Timeout waiting for Facebook: {e}')
                     self.logger.info('Browser will stay open - please login manually if needed')
@@ -153,13 +109,11 @@ class FacebookWatcher(BaseWatcher):
         return items
 
     def create_action_file(self, item) -> Path:
-        """Create action file for Facebook/Instagram item"""
-
-        platform = 'Facebook' if item['type'] == 'facebook_message' else 'Instagram'
+        """Create action file for Facebook item"""
 
         content = f'''---
-type: {item['type']}
-platform: {platform}
+type: facebook_message
+platform: Facebook
 from: {item['sender']}
 received: {item['timestamp']}
 priority: high
@@ -167,7 +121,7 @@ status: pending
 item_id: {item['id']}
 ---
 
-## {platform} Message
+## Facebook Message
 
 **From:** {item['sender']}
 
@@ -190,8 +144,7 @@ Add any relevant context or decisions here.
 
         # Sanitize filename
         safe_name = ''.join(c for c in item['sender'] if c.isalnum() or c in (' ', '-', '_'))
-        platform_prefix = 'FB' if item['type'] == 'facebook_message' else 'IG'
-        filepath = self.needs_action / f'{platform_prefix}_{safe_name}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.md'
+        filepath = self.needs_action / f'FB_{safe_name}_{datetime.now().strftime("%Y%m%d_%H%M%S")}.md'
         filepath.write_text(content, encoding='utf-8')
 
         return filepath
@@ -201,7 +154,6 @@ if __name__ == '__main__':
     if len(sys.argv) < 3:
         print('Usage: python facebook_watcher.py <vault_path> <session_path>')
         print('Note: First run requires manual Facebook login')
-        print('Note: This watcher also checks Instagram (same Meta session)')
         sys.exit(1)
 
     watcher = FacebookWatcher(sys.argv[1], sys.argv[2])

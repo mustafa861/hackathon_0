@@ -79,6 +79,18 @@ module.exports = {
       log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
     },
     {
+      name: 'instagram-watcher',
+      script: 'python',
+      args: 'src/watchers/instagram_watcher.py vault/ .instagram_session/',
+      interpreter: 'none',
+      autorestart: true,
+      watch: false,
+      max_memory_restart: '400M',
+      error_file: 'vault/Logs/instagram-watcher-error.log',
+      out_file: 'vault/Logs/instagram-watcher-out.log',
+      log_date_format: 'YYYY-MM-DD HH:mm:ss Z'
+    },
+    {
       name: 'twitter-watcher',
       script: 'python',
       args: 'src/watchers/twitter_watcher.py vault/ .twitter_session/',
